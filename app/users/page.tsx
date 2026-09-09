@@ -5,11 +5,12 @@ import React from 'react'
 interface User {
     id: number;
     name: string;   
+    email: string;
 }
 
 const UsersPage = async () => {
     const res = await fetch('https://jsonplaceholder.typicode.com/users', {
-        next: { revalidate: 60 } // Revalidate the data every 60 seconds
+        cache: 'no-store' //This option disables caching and ensures that the data is always fetched from the server. You can also use 'force-cache' to force caching, or 'default' to use the default caching behavior.
     });
     const users: User[] = await res.json();
 
@@ -17,11 +18,24 @@ const UsersPage = async () => {
         <>
             <h1>Users</h1>
             <p>{new Date().toLocaleTimeString()}</p>
-            <ul>
-                {users.map((user: User) => (
-                    <li key={user.id}>{user.name}</li>
-                ))}
-            </ul>
+            <table className='table table-bordered border-collapse border border-slate-400'>
+                <thead>
+                    <tr>
+                        <th className='border border-slate-400 px-4 py-2'>ID</th>
+                        <th className='border border-slate-400 px-4 py-2'>Name</th>
+                        <th className='border border-slate-400 px-4 py-2'>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {users.map((user: User) => (
+                        <tr key={user.id}>
+                            <td className='border border-slate-400 px-4 py-2'>{user.id}</td>
+                            <td className='border border-slate-400 px-4 py-2'>{user.name}</td>
+                            <td className='border border-slate-400 px-4 py-2'>{user.email}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </>
     )
 }
