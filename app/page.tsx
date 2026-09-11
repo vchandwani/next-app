@@ -9,9 +9,9 @@ export default function Home() {
       <div className="absolute right-0 top-0">
         <ThemeToggle />
       </div>
-      <h1>Hello World</h1>
+      <h1>Hello NextJs</h1>
       {/* Client Side Navigation */}
-      <Link href="/users">Users</Link>
+      <Link href="/dashboard/users">Users</Link>
       <ProductCard />
     </main>
     );
