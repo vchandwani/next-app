@@ -25,7 +25,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       data-theme="pastel"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col bg-base-100 text-base-content transition-colors duration-200">
+        {children}
+      </body>
     </html>
   );
 }
