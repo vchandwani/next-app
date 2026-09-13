@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import React from 'react'
+
+export const instant = false;
+
 //Fetching in server component has extra benefits like caching, streaming, and avoiding CORS issues.Avoding fetching in client component is a good practice to avoid unnecessary re-renders and improve performance.
 // Next JS has caching built in for server components, so you can use the fetch API directly without any additional libraries. You can also use the revalidate option to specify how often the data should be re-fetched.
 

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import ProductCard from "./components/ProductCard";
 import ThemeToggle from "./components/ThemeToggle";
 
 export default function Home() {
@@ -11,8 +10,9 @@ export default function Home() {
       </div>
       <h1>Hello NextJs</h1>
       {/* Client Side Navigation */}
-      <Link href="/dashboard/users">Users</Link>
-      <ProductCard />
+      <div className="flex w-full items-center justify-space-between gap-4">
+        <Link className="text hover:underline" href="/dashboard/users">Users</Link>
+      </div>
     </main>
     );
 }
