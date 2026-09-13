@@ -8,7 +8,10 @@ export default function Home() {
       <div className="absolute right-0 top-0">
         <ThemeToggle />
       </div>
-      <h1>Hello NextJs</h1>
+      <section>
+        <h1 className="text-4xl font-bold">The Hub for Evenry Dev <br/>Events you can't miss</h1>
+        <p className="text-center mt-5">Meetups, conferences, and more!</p>
+      </section>
       {/* Client Side Navigation */}
       <div className="flex w-full items-center justify-space-between gap-4">
         <Link className="text hover:underline" href="/dashboard/users">Users</Link>
