@@ -4,13 +4,15 @@ type IconsProps = {
   name: IconName;
   className?: string;
   size?: number;
+  width?: number;
+  height?: number;
 };
 
-export function Icons({ name, className, size = 24 }: IconsProps) {
+export function Icons({ name, className, size = 24, width, height }: IconsProps) {
   const iconProps = {
     className,
-    width: size,
-    height: size,
+    width: width || size,
+    height: height || size,
     fill: "none",
     stroke: "currentColor",
     "aria-hidden": true,
