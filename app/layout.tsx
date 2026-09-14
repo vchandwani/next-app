@@ -3,6 +3,7 @@ import { Schibsted_Grotesk, Martian_Mono, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import LightRays from "@/components/LightRays";
+import Navbar from "./components/Navbar";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -29,7 +30,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className={`${schibstedGrotesk.variable} ${martianMono.variable} min-h-screen flex flex-col bg-base-100 text-base-content transition-colors duration-200`}>
-        <div className="absolute inset-0 top-0 z-[-1] min-h-screen">
+        <Navbar />
+        <div className="pointer-events-none fixed inset-0 z-0">
           <LightRays
               raysOrigin="top-center-offset"
               raysColor="#5dfeca"
@@ -42,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               distortion={0.01}
           />
         </div>
-        <main>
+        <main className="relative z-10">
           {children}
         </main>
       </body>
