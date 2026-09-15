@@ -319,4 +319,16 @@
       }
     }
   }
+
+  .error {
+    @apply flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center;
+  }
+
+  .error-title {
+    @apply text-2xl font-semibold text-foreground;
+  }
+
+  .error-retry {
+    @apply rounded-md bg-primary px-4 py-2 font-semibold text-primary-foreground transition-colors hover:bg-primary/90;
+  }
 }
