@@ -163,7 +163,7 @@ const eventSchema = new Schema<EventDocument>(
 
 eventSchema.index({ slug: 1 }, { unique: true });
 
-eventSchema.pre("save", function (next) {
+eventSchema.pre("save", function () {
     try {
         // Only regenerate the slug when the title is new or has changed.
         if (this.isModified("title")) {
@@ -172,10 +172,8 @@ eventSchema.pre("save", function (next) {
 
         this.date = normalizeDate(this.date);
         this.time = normalizeTime(this.time);
-
-        next();
     } catch (error) {
-        next(error instanceof Error ? error : new Error(String(error)));
+        throw error instanceof Error ? error : new Error(String(error));
     }
 });
 
