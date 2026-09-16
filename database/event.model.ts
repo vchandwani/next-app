@@ -110,7 +110,7 @@ const EventSchema = new Schema<IEvent>(
 );
 
 // Pre-save hook for slug generation and data normalization
-EventSchema.pre("save" as never, function (this: unknown) {
+EventSchema.pre('save', function (next) {
     const event = this as IEvent;
 
     // Generate slug only if title changed or document is new
@@ -127,6 +127,8 @@ EventSchema.pre("save" as never, function (this: unknown) {
     if (event.isModified('time')) {
         event.time = normalizeTime(event.time);
     }
+
+    next();
 });
 
 // Helper function to generate URL-friendly slug
@@ -143,8 +145,8 @@ function generateSlug(title: string): string {
 // Helper function to normalize date to ISO format
 function normalizeDate(dateString: string): string {
     const date = new Date(dateString);
-    if (Number.isNaN(date.getTime())) {
-        throw new TypeError('Invalid date format');
+    if (isNaN(date.getTime())) {
+        throw new Error('Invalid date format');
     }
     return date.toISOString().split('T')[0]; // Return YYYY-MM-DD format
 }
@@ -153,13 +155,13 @@ function normalizeDate(dateString: string): string {
 function normalizeTime(timeString: string): string {
     // Handle various time formats and convert to HH:MM (24-hour format)
     const timeRegex = /^(\d{1,2}):(\d{2})(\s*(AM|PM))?$/i;
-    const match = timeRegex.exec(timeString.trim());
+    const match = timeString.trim().match(timeRegex);
 
     if (!match) {
-        throw new TypeError('Invalid time format. Use HH:MM or HH:MM AM/PM');
+        throw new Error('Invalid time format. Use HH:MM or HH:MM AM/PM');
     }
 
-    let hours = Number.parseInt(match[1], 10);
+    let hours = parseInt(match[1]);
     const minutes = match[2];
     const period = match[4]?.toUpperCase();
 
@@ -169,9 +171,8 @@ function normalizeTime(timeString: string): string {
         if (period === 'AM' && hours === 12) hours = 0;
     }
 
-    const parsedMinutes = Number.parseInt(minutes, 10);
-    if (hours < 0 || hours > 23 || parsedMinutes < 0 || parsedMinutes > 59) {
-        throw new TypeError('Invalid time values');
+    if (hours < 0 || hours > 23 || parseInt(minutes) < 0 || parseInt(minutes) > 59) {
+        throw new Error('Invalid time values');
     }
 
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
