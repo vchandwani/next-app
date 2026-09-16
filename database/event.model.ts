@@ -115,7 +115,11 @@ EventSchema.pre('save', function (next) {
 
     // Generate slug only if title changed or document is new
     if (event.isModified('title') || event.isNew) {
-        event.slug = generateSlug(event.title);
+        const slug = generateSlug(event.title);
+        if (!slug) {
+            return next(new Error('Title must include at least one alphanumeric character'));
+        }
+        event.slug = slug;
     }
 
     // Normalize date to ISO format if it's not already
