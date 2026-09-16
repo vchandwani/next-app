@@ -7,7 +7,7 @@ export default function Home() {
     <main className="relative">
       <section>
         <h1 className="text-4xl font-bold">
-          The Hub for Evenry Dev <br />
+          The Hub for Every Dev <br />
           Events you can't miss
         </h1>
         <p className="text-center mt-5">Meetups, conferences, and more!</p>
