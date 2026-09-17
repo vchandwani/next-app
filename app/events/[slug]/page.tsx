@@ -1,10 +1,11 @@
 import { Suspense } from "react";
-import EventDetails from "@/app/components/EventDetails";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { IconName, Icons } from "@/components/icons/Icons";
-import { Icon } from "lucide-react";
 import BookEvent from "@/app/components/BookEvent";
+import { getSimilarEventsBySlug } from "@/lib/actions/event.actions";
+import { IEvent } from "@/database";
+import EventCard from "@/app/components/EventCard";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -47,13 +48,16 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
   const request = await fetch(`${BASE_URL}/api/events/${slug}`).then((res) => res.json());
 
   const {
-    event: { description, title, image, overview, date, time, location, mode, agenda, audience, tags, organizer, bookings },
+    event: { description, title, image, overview, date, time, location, mode, agenda, audience, tags, organizer },
   } = request;
 
   if (!description) return notFound();
 
+  const bookings = 10;
+  const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
+
   return (
-    <>
+    <section id="event">
       <div className="header">
         <h1>{title || "Loading..."}</h1>
         <p>{description || "Loading..."}</p>
@@ -94,7 +98,11 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
           </div>
         </aside>
       </div>
-    </>
+      <div className="flex w-full flex-col gap-4 pt-20">
+        <h2>Similar Events</h2>
+        <div className="events">{similarEvents?.length > 0 && similarEvents.map((event: IEvent) => <EventCard key={event?.id} {...event} />)}</div>
+      </div>
+    </section>
   );
 };
 
