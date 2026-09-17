@@ -3,6 +3,28 @@
 import { Event } from "@/database";
 import connectDB from "../mongodb";
 
+export const getAllEvents = async () => {
+    try {
+        await connectDB();
+        const events = await Event.find().sort({ createdAt: -1 }).lean();
+        return JSON.parse(JSON.stringify(events));
+    } catch (error) {
+        console.error("Error fetching events:", error);
+        return [];
+    }
+};
+
+export const getEventBySlug = async (slug: string) => {
+    try {
+        await connectDB();
+        const event = await Event.findOne({ slug: slug.trim() }).lean();
+        return event ? JSON.parse(JSON.stringify(event)) : null;
+    } catch (error) {
+        console.error("Error fetching event:", error);
+        return null;
+    }
+};
+
 export const getSimilarEventsBySlug = async (slug: string) => {
     // Implement the logic to fetch similar events by slug
     try {

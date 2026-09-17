@@ -3,12 +3,11 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { IconName, Icons } from "@/components/icons/Icons";
 import BookEvent from "@/app/components/BookEvent";
-import { getSimilarEventsBySlug } from "@/lib/actions/event.actions";
+import { getEventBySlug, getSimilarEventsBySlug } from "@/lib/actions/event.actions";
 import { IEvent } from "@/database";
 import EventCard from "@/app/components/EventCard";
 import { cacheLife } from "next/cache";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+import { getBookingByEvent } from "@/lib/actions/bookings.actions";
 
 const EventDetailsItem = ({ icon, alt, label }: { icon: IconName; alt: string; label: string }) => {
   return (
@@ -48,21 +47,16 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
   "use cache";
   cacheLife("hours");
   const { slug } = await params;
-  const response = await fetch(`${BASE_URL}/api/events/${slug}`);
+  const event = await getEventBySlug(slug);
 
-  if (!response.ok) return notFound();
+  if (!event) return notFound();
 
-  const request = await response.json();
-
-  if (!request?.event) return notFound();
-
-  const {
-    event: { description, title, image, overview, date, time, location, mode, agenda, audience, tags, organizer },
-  } = request;
+  const { description, title, image, overview, date, time, location, mode, agenda, audience, tags, organizer } = event;
 
   if (!description) return notFound();
 
-  const bookings = 10;
+  const bookings = (await getBookingByEvent(event._id))?.length || 0;
+
   const similarEvents: IEvent[] = await getSimilarEventsBySlug(slug);
 
   return (
@@ -105,7 +99,7 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
             ) : (
               <p className="text-sm">Be the first one to book this event.</p>
             )}
-            <BookEvent eventId={request.event._id} slug={slug} />
+            <BookEvent eventId={event._id} slug={slug} />
           </div>
         </aside>
       </div>

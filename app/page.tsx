@@ -3,20 +3,17 @@ import EventCard from "./components/EventCard";
 import ExploreBtn from "./components/ExploreBtn";
 import { Suspense } from "react";
 import { cacheLife } from "next/cache";
-
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
+import { getAllEvents } from "@/lib/actions/event.actions";
 
 const FeaturedEvents = async () => {
   "use cache";
   cacheLife("hours");
-  const response = await fetch(`${BASE_URL}/api/events`);
-  const data = await response.json();
+  const events = await getAllEvents();
 
   return (
     <ul className="events">
-      {data.events &&
-        data.events.length > 0 &&
-        data.events.map((event: EventItem) => (
+      {events.length > 0 &&
+        events.map((event: EventItem) => (
           <li key={event.slug} className="list-none">
             <EventCard {...event} />
           </li>
