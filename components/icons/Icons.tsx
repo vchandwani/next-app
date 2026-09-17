@@ -1,4 +1,4 @@
-type IconName = "arrow-down" | "audience" | "calendar" | "clock" | "file" | "globe" | "mode" | "next" | "pin" | "vercel" | "window";
+export type IconName = "arrow-down" | "audience" | "calendar" | "clock" | "file" | "globe" | "mode" | "next" | "pin" | "vercel" | "window";
 
 type IconsProps = {
   name: IconName;

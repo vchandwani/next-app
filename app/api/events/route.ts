@@ -38,6 +38,10 @@ export async function POST(request: NextRequest) {
             });
             return NextResponse.json({ message: 'Image file is required' }, { status: 400 });
         }
+
+        const tags = event.tags;
+        const agenda = event.agenda;
+
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
@@ -55,6 +59,8 @@ export async function POST(request: NextRequest) {
         const createdEvent = await Event.create({
             ...event,
             image: (uploadResult as { secure_url: string }).secure_url,
+            tags: tags,
+            agenda: agenda,
         });
         return NextResponse.json({ message: 'Event created successfully', event: createdEvent }, { status: 201 });
     } catch (error) {

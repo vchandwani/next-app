@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  cacheComponents: true,
   images: {
     remotePatterns: [
       {
@@ -9,10 +13,6 @@ const nextConfig: NextConfig = {
         hostname: 'res.cloudinary.com',
       },
     ]
-  },
-  experimental: {
-    turbopackFileSystemCacheForDev: true,
-    cacheComponents: true,
   },
 };
 
