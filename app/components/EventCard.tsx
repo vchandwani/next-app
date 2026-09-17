@@ -17,7 +17,9 @@ const EventCard = ({ title, image, slug, location, date, time }: EventItem) => {
         }
       }}
     >
-      <Image src={image} alt={title} width={410} height={300} className="poster" />
+      <div className="poster">
+        <Image src={image} alt={title} fill sizes="(max-width: 768px) 100vw, 410px" className="object-cover rounded-lg" />
+      </div>
       <div className="flex flex-row gap-2">
         <Icons name="pin" className="pin" size={14} />
         <p>{location}</p>

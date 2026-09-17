@@ -65,7 +65,9 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
       <div className="details">
         {/* Left Side */}
         <div className="content">
-          <Image src={image} alt={title} width={600} height={800} className="banner" />
+          <div className="banner">
+            <Image src={image} alt={title} fill sizes="(max-width: 1024px) 100vw, 66vw" className="object-cover rounded-lg" />
+          </div>
           <section className="flex-col-gap2">
             <h2>Overview</h2>
             <p>{overview}</p>
@@ -100,7 +102,7 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
       </div>
       <div className="flex w-full flex-col gap-4 pt-20">
         <h2>Similar Events</h2>
-        <div className="events">{similarEvents?.length > 0 && similarEvents.map((event: IEvent) => <EventCard key={event?.id} {...event} />)}</div>
+        <div className="events">{similarEvents?.length > 0 && similarEvents.map((event: IEvent) => <EventCard key={event.slug} {...event} />)}</div>
       </div>
     </section>
   );
