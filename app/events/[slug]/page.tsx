@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { IconName, Icons } from "@/components/icons/Icons";
 import { Icon } from "lucide-react";
+import BookEvent from "@/app/components/BookEvent";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -46,7 +47,7 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
   const request = await fetch(`${BASE_URL}/api/events/${slug}`).then((res) => res.json());
 
   const {
-    event: { description, title, image, overview, date, time, location, mode, agenda, audience, tags, organizer },
+    event: { description, title, image, overview, date, time, location, mode, agenda, audience, tags, organizer, bookings },
   } = request;
 
   if (!description) return notFound();
@@ -82,7 +83,15 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
         </div>
         {/* Right Side */}
         <aside className="booking">
-          <p className="text-lg font-semibold">Book Event</p>
+          <div className="signup-card">
+            <h2>Book your Spot</h2>
+            {bookings > 0 ? (
+              <p className="text-sm">Join {bookings} people who have already booked this event.</p>
+            ) : (
+              <p className="text-sm">Be the first one to book this event.</p>
+            )}
+            <BookEvent />
+          </div>
         </aside>
       </div>
     </>
