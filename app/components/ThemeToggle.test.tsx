@@ -3,13 +3,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ThemeToggle from "./ThemeToggle";
 
 function mockMatchMedia(matches: boolean) {
+  let currentMatches = matches;
   const addEventListener = vi.fn();
   const removeEventListener = vi.fn();
+  const listeners = new Set<(event: MediaQueryListEvent) => void>();
+
+  addEventListener.mockImplementation((event: string, listener: (event: MediaQueryListEvent) => void) => {
+    if (event === "change") {
+      listeners.add(listener);
+    }
+  });
+
+  removeEventListener.mockImplementation((event: string, listener: (event: MediaQueryListEvent) => void) => {
+    if (event === "change") {
+      listeners.delete(listener);
+    }
+  });
 
   Object.defineProperty(window, "matchMedia", {
     writable: true,
     value: vi.fn().mockReturnValue({
-      matches,
+      get matches() {
+        return currentMatches;
+      },
       media: "(prefers-color-scheme: dark)",
       onchange: null,
       addEventListener,
@@ -20,7 +36,16 @@ function mockMatchMedia(matches: boolean) {
     }),
   });
 
-  return { addEventListener, removeEventListener };
+  return {
+    addEventListener,
+    removeEventListener,
+    dispatchChange(nextMatches: boolean) {
+      currentMatches = nextMatches;
+      for (const listener of listeners) {
+        listener({ matches: nextMatches } as MediaQueryListEvent);
+      }
+    },
+  };
 }
 
 describe("ThemeToggle", () => {
@@ -91,6 +116,20 @@ describe("ThemeToggle", () => {
 
     window.localStorage.setItem("theme", "dark");
     window.dispatchEvent(new StorageEvent("storage", { key: "theme", newValue: "dark" }));
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveClass("dark");
+      expect(document.documentElement).toHaveAttribute("data-theme", "luxury");
+      expect(screen.getByRole("button")).toHaveAttribute("aria-label", "Switch to light theme");
+    });
+  });
+
+  it("updates when the system theme preference changes", async () => {
+    const { dispatchChange } = mockMatchMedia(false);
+
+    render(<ThemeToggle />);
+
+    dispatchChange(true);
 
     await waitFor(() => {
       expect(document.documentElement).toHaveClass("dark");
