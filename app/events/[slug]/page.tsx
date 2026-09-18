@@ -9,7 +9,7 @@ import EventCard from "@/app/components/EventCard";
 import { cacheLife } from "next/cache";
 import { getBookingByEvent } from "@/lib/actions/bookings.actions";
 
-const EventDetailsItem = ({ icon, alt, label }: { icon: IconName; alt: string; label: string }) => {
+const EventDetailsItem = ({ icon, label }: { icon: IconName; label: string }) => {
   return (
     <div className="flex-row-gap-2 items-center">
       <Icons name={icon} width={17} height={17} />
@@ -77,11 +77,11 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
           </section>
           <section className="flex-col-gap-2">
             <h2>Event Details</h2>
-            <EventDetailsItem icon="calendar" alt="calendar" label={date} />
-            <EventDetailsItem icon="clock" alt="clock" label={time} />
-            <EventDetailsItem icon="pin" alt="pin" label={location} />
-            <EventDetailsItem icon="mode" alt="mode" label={mode} />
-            <EventDetailsItem icon="audience" alt="audience" label={audience} />
+            <EventDetailsItem icon="calendar" label={date} />
+            <EventDetailsItem icon="clock" label={time} />
+            <EventDetailsItem icon="pin" label={location} />
+            <EventDetailsItem icon="mode" label={mode} />
+            <EventDetailsItem icon="audience" label={audience} />
           </section>
           <EventAgenda agendaItems={agenda} />
           <section className="flex-col-gap-2">

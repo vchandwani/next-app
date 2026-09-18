@@ -1,32 +1,57 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 const themeStorageKey = "theme";
+const themeChangeEvent = "themechange";
 
-function applyTheme(theme: "light" | "dark") {
+type Theme = "light" | "dark";
+
+function getPreferredTheme(): Theme {
+  if (typeof window === "undefined") {
+    return "light";
+  }
+
+  const savedTheme = window.localStorage.getItem(themeStorageKey);
+  if (savedTheme === "dark" || savedTheme === "light") {
+    return savedTheme;
+  }
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function subscribe(onStoreChange: () => void) {
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  const handleChange = () => onStoreChange();
+
+  window.addEventListener("storage", handleChange);
+  window.addEventListener(themeChangeEvent, handleChange);
+  mediaQuery.addEventListener("change", handleChange);
+
+  return () => {
+    window.removeEventListener("storage", handleChange);
+    window.removeEventListener(themeChangeEvent, handleChange);
+    mediaQuery.removeEventListener("change", handleChange);
+  };
+}
+
+function applyTheme(theme: Theme) {
   const root = document.documentElement;
   root.classList.toggle("dark", theme === "dark");
   root.dataset.theme = theme === "dark" ? "luxury" : "pastel";
 }
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const theme = useSyncExternalStore(subscribe, getPreferredTheme, getPreferredTheme);
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem(themeStorageKey);
-    const preferredTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    const initialTheme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : preferredTheme;
-
-    setTheme(initialTheme);
-    applyTheme(initialTheme);
-  }, []);
+    applyTheme(theme);
+  }, [theme]);
 
   function toggleTheme() {
     const nextTheme = theme === "light" ? "dark" : "light";
-    setTheme(nextTheme);
     window.localStorage.setItem(themeStorageKey, nextTheme);
-    applyTheme(nextTheme);
+    window.dispatchEvent(new Event(themeChangeEvent));
   }
 
   const isDark = theme === "dark";
