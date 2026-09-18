@@ -148,7 +148,7 @@
 }
 
 @utility glass {
-  @apply bg-background/80 rounded-md bg-clip-padding backdrop-filter backdrop-blur-xl border-b border-border-dark;
+  @apply bg-background rounded-md bg-clip-padding backdrop-filter backdrop-blur-xl border-b border-border-dark;
 }
 
 @utility card-shadow {
