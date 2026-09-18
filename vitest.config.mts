@@ -11,7 +11,11 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov', 'json-summary'],
             all: true,
-            include: ['app/components/ThemeToggle.tsx'],
+            include: [
+                'app/**/*.{ts,tsx}',
+                'components/**/*.{ts,tsx}',
+                'lib/**/*.{ts,tsx}'
+            ],
 
             // 3. Exclude files that shouldn't or can't be tested
             exclude: [
