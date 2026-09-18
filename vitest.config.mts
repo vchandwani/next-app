@@ -10,11 +10,30 @@ export default defineConfig({
         coverage: {
             provider: 'v8',
             reporter: ['text', 'lcov', 'json-summary'],
+
+            // 1. Force coverage on all files, even if they have zero tests written
+            all: true,
+
+            // 2. Only check files inside these specific folders
+            include: [
+                'app/**/*.{ts,tsx}',
+                'components/**/*.{ts,tsx}',
+                'lib/**/*.{ts,tsx}'
+            ],
+
+            // 3. Exclude files that shouldn't or can't be tested
+            exclude: [
+                '**/*.d.ts',          // Exclude TypeScript type declarations
+                'app/**/layout.tsx',  // Next.js layouts are notoriously hard to unit test
+                'app/**/loading.tsx'  // Exclude simple UI wrappers if desired
+            ],
+
+            // 4. Enforce the pass percentage
             thresholds: {
-                lines: 80,      // Minimum 80% line coverage
-                functions: 80,  // Minimum 80% function coverage
-                branches: 80,   // Minimum 80% branch coverage
-                statements: 80  // Minimum 80% statement coverage
+                lines: 80,
+                functions: 80,
+                branches: 80,
+                statements: 80
             },
         },
     },
