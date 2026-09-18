@@ -1,12 +1,7 @@
-import React from 'react'
+import React from "react";
 
-const Layout = ({children}: {children: React.ReactNode}) => {
-  return (
-    <div>
-        <>Users Insight</>
-        {children}
-    </div>
-  )
-}
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>;
+};
 
-export default Layout
+export default Layout;
