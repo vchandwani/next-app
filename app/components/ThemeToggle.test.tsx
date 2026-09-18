@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import ThemeToggle from "./ThemeToggle";
 
@@ -31,6 +31,7 @@ describe("ThemeToggle", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.restoreAllMocks();
   });
 
@@ -80,6 +81,21 @@ describe("ThemeToggle", () => {
       expect(document.documentElement).toHaveClass("dark");
       expect(document.documentElement).toHaveAttribute("data-theme", "luxury");
       expect(button).toHaveAttribute("aria-label", "Switch to light theme");
+    });
+  });
+
+  it("updates when a storage event changes the saved theme", async () => {
+    mockMatchMedia(false);
+
+    render(<ThemeToggle />);
+
+    window.localStorage.setItem("theme", "dark");
+    window.dispatchEvent(new StorageEvent("storage", { key: "theme", newValue: "dark" }));
+
+    await waitFor(() => {
+      expect(document.documentElement).toHaveClass("dark");
+      expect(document.documentElement).toHaveAttribute("data-theme", "luxury");
+      expect(screen.getByRole("button")).toHaveAttribute("aria-label", "Switch to light theme");
     });
   });
 });

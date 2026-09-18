@@ -2,6 +2,12 @@ import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
+const coverageInclude = process.env.VITEST_COVERAGE_INCLUDE?.split(',') ?? [
+    'app/**/*.{ts,tsx}',
+    'components/**/*.{ts,tsx}',
+    'lib/**/*.{ts,tsx}'
+]
+
 export default defineConfig({
     plugins: [react(), tsconfigPaths()],
     test: {
@@ -11,11 +17,7 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov', 'json-summary'],
             all: true,
-            include: [
-                'app/**/*.{ts,tsx}',
-                'components/**/*.{ts,tsx}',
-                'lib/**/*.{ts,tsx}'
-            ],
+            include: coverageInclude,
 
             // 3. Exclude files that shouldn't or can't be tested
             exclude: [
