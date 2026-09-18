@@ -7,6 +7,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Unlayered: must not be overridable by @layer utilities/components */
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
 :root {
   --color-blue: #087f73;
   --color-light-100: #334155;
