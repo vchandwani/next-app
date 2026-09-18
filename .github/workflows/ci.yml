@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20" # Matches your @types/node version
+          node-version: "22" # Matches the current test dependency engine requirements
           cache: "npm"
 
       - name: Install dependencies

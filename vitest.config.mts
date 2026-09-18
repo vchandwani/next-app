@@ -11,16 +11,6 @@ export default defineConfig({
             provider: 'v8',
             reporter: ['text', 'lcov', 'json-summary'],
 
-            // 1. Force coverage on all files, even if they have zero tests written
-            all: true,
-
-            // 2. Only check files inside these specific folders
-            include: [
-                'app/**/*.{ts,tsx}',
-                'components/**/*.{ts,tsx}',
-                'lib/**/*.{ts,tsx}'
-            ],
-
             // 3. Exclude files that shouldn't or can't be tested
             exclude: [
                 '**/*.d.ts',          // Exclude TypeScript type declarations
