@@ -1,9 +1,12 @@
-import React from 'react'
+import React from "react";
+import Link from "next/link";
 
 const Analytics = () => {
   return (
-    <div>Analytics</div>
-  )
-}
+    <div>
+      <Link href="/analytics">Analytics</Link>
+    </div>
+  );
+};
 
-export default Analytics
+export default Analytics;

@@ -19,30 +19,32 @@ const UsersPage = async () => {
   const users: User[] = await res.json();
 
   return (
-    <>
+    <div className="w-full">
       <h1>Users</h1>
       <p>{new Date().toLocaleTimeString()}</p>
-      <table className="table table-bordered border-collapse border border-slate-400">
-        <thead>
-          <tr>
-            <th className="border border-slate-400 px-4 py-2">ID</th>
-            <th className="border border-slate-400 px-4 py-2">Name</th>
-            <th className="border border-slate-400 px-4 py-2">Email</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user: User) => (
-            <tr key={user.id}>
-              <td className="border border-slate-400 px-4 py-2 link">
-                <Link href={`/dashboard/users/${user.id}`}>{user.id}</Link>
-              </td>
-              <td className="border border-slate-400 px-4 py-2">{user.name}</td>
-              <td className="border border-slate-400 px-4 py-2">{user.email}</td>
+      <div className="w-full max-w-full overflow-x-auto">
+        <table className="table table-bordered w-full table-fixed border-collapse border border-slate-400">
+          <thead>
+            <tr>
+              <th className="w-20 border border-slate-400 px-4 py-2">ID</th>
+              <th className="border border-slate-400 px-4 py-2">Name</th>
+              <th className="border border-slate-400 px-4 py-2">Email</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </>
+          </thead>
+          <tbody>
+            {users.map((user: User) => (
+              <tr key={user.id}>
+                <td className="w-20 wrap-break-word border border-slate-400 px-4 py-2 link">
+                  <Link href={`/dashboard/users/${user.id}`}>{user.id}</Link>
+                </td>
+                <td className="wrap-break-word border border-slate-400 px-4 py-2">{user.name}</td>
+                <td className="wrap-break-word border border-slate-400 px-4 py-2">{user.email}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 

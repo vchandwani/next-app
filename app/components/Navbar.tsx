@@ -12,10 +12,16 @@ const Navbar = () => {
         </Link>
         <ul>
           <Link href="/" className="">
-            Home
-          </Link>
-          <Link href="/" className="">
             Events
+          </Link>
+          <Link href="/about" className="">
+            About Us
+          </Link>
+          <Link href="/dashboard/analytics" className="">
+            Analytics
+          </Link>
+          <Link href="/dashboard/users" className="">
+            Users
           </Link>
           <ThemeToggle />
         </ul>
