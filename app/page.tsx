@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { cacheLife } from "next/cache";
 import { getAllEvents } from "@/lib/actions/event.actions";
 
-const FeaturedEvents = async () => {
+export const FeaturedEvents = async () => {
   "use cache";
   cacheLife("hours");
   const events = await getAllEvents();

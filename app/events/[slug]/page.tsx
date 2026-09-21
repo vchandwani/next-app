@@ -9,7 +9,7 @@ import EventCard from "@/app/components/EventCard";
 import { cacheLife } from "next/cache";
 import { getBookingByEvent } from "@/lib/actions/bookings.actions";
 
-const EventDetailsItem = ({ icon, alt, label }: { icon: IconName; alt: string; label: string }) => {
+export const EventDetailsItem = ({ icon, label }: { icon: IconName; label: string }) => {
   return (
     <div className="flex-row-gap-2 items-center">
       <Icons name={icon} width={17} height={17} />
@@ -18,7 +18,7 @@ const EventDetailsItem = ({ icon, alt, label }: { icon: IconName; alt: string; l
   );
 };
 
-const EventAgenda = ({ agendaItems }: { agendaItems: string[] }) => {
+export const EventAgenda = ({ agendaItems }: { agendaItems: string[] }) => {
   return (
     <div className="agenda">
       <h2>Agenda</h2>
@@ -31,7 +31,7 @@ const EventAgenda = ({ agendaItems }: { agendaItems: string[] }) => {
   );
 };
 
-const EventTags = ({ tags }: { tags: string[] }) => {
+export const EventTags = ({ tags }: { tags: string[] }) => {
   return (
     <div className="flex  flex-row gap-1.5 flex-wrap">
       {tags.map((tag, index) => (
@@ -43,7 +43,7 @@ const EventTags = ({ tags }: { tags: string[] }) => {
   );
 };
 
-const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string }> }) => {
+export const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string }> }) => {
   "use cache";
   cacheLife("hours");
   const { slug } = await params;
@@ -77,11 +77,11 @@ const EventDetailsContent = async ({ params }: { params: Promise<{ slug: string 
           </section>
           <section className="flex-col-gap-2">
             <h2>Event Details</h2>
-            <EventDetailsItem icon="calendar" alt="calendar" label={date} />
-            <EventDetailsItem icon="clock" alt="clock" label={time} />
-            <EventDetailsItem icon="pin" alt="pin" label={location} />
-            <EventDetailsItem icon="mode" alt="mode" label={mode} />
-            <EventDetailsItem icon="audience" alt="audience" label={audience} />
+            <EventDetailsItem icon="calendar" label={date} />
+            <EventDetailsItem icon="clock" label={time} />
+            <EventDetailsItem icon="pin" label={location} />
+            <EventDetailsItem icon="mode" label={mode} />
+            <EventDetailsItem icon="audience" label={audience} />
           </section>
           <EventAgenda agendaItems={agenda} />
           <section className="flex-col-gap-2">
