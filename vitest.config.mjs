@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    globals: true,
+    restoreMocks: true, // <-- Add this line! It automatically calls vi.restoreAllMocks() after every test
     coverage: {
       provider: "istanbul",
       reporter: ["text", "lcov", "json-summary"],

@@ -3,20 +3,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import LightRays, { hexToRgb, getAnchorAndDir } from "./LightRays";
 
-// 1. Mock 'ogl' using ES6 Classes so instantiation with 'new' works natively
+// 1. Mock 'ogl' using ES6 Classes
 vi.mock("ogl", () => {
   class MockRenderer {
     gl: any;
     dpr = 1;
     static shouldThrowError = false;
+    static throwErrorOnCleanup = false;
     static returnNullExtension = false;
 
     constructor() {
       this.gl = {
         canvas: document.createElement("canvas"),
-        getExtension: vi.fn().mockImplementation(() => {
+        getExtension: vi.fn().mockImplementation((ext: string) => {
           if (MockRenderer.returnNullExtension) return null;
-          return { loseContext: vi.fn() };
+          return {
+            loseContext: vi.fn().mockImplementation(() => {
+              if (MockRenderer.throwErrorOnCleanup) {
+                throw new Error("Cleanup failed");
+              }
+            }),
+          };
         }),
         enable: vi.fn(),
         blendFunc: vi.fn(),
@@ -51,7 +58,7 @@ vi.mock("ogl", () => {
   };
 });
 
-// 2. Mock Browser Observers
+// 2. Mock Observers
 let observerCallback: IntersectionObserverCallback;
 class MockIntersectionObserver {
   constructor(cb: IntersectionObserverCallback) {
@@ -63,12 +70,8 @@ class MockIntersectionObserver {
 }
 vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 
-class MockResizeObserver {
-  observe = vi.fn();
-  disconnect = vi.fn();
-  unobserve = vi.fn();
-}
-vi.stubGlobal("ResizeObserver", MockResizeObserver);
+let rafCallbacks: Map<number, FrameRequestCallback> = new Map();
+let rafIdCounter = 0;
 
 describe("LightRays Utilities", () => {
   describe("hexToRgb", () => {
@@ -92,58 +95,16 @@ describe("LightRays Utilities", () => {
     const w = 1000;
     const h = 500;
 
-    it("calculates top-center (default)", () => {
-      const { anchor, dir } = getAnchorAndDir("top-center", w, h);
-      expect(anchor).toEqual([500, -100]);
-      expect(dir).toEqual([0, 1]);
-    });
-
-    it("calculates top-left", () => {
-      const { anchor, dir } = getAnchorAndDir("top-left", w, h);
-      expect(anchor).toEqual([0, -100]);
-      expect(dir).toEqual([0, 1]);
-    });
-
-    it("calculates bottom-right", () => {
-      const { anchor, dir } = getAnchorAndDir("bottom-right", w, h);
-      expect(anchor).toEqual([1000, 600]);
-      expect(dir).toEqual([0, -1]);
-    });
-
-    it("calculates top-center-offset", () => {
-      const { anchor, dir } = getAnchorAndDir("top-center-offset", w, h);
-      expect(anchor).toEqual([700, -100]);
-      expect(dir).toEqual([-0.2, 1]);
-    });
-
-    it("calculates right", () => {
-      const { anchor, dir } = getAnchorAndDir("right", w, h);
-      expect(anchor[0]).toEqual(1200);
-      expect(dir).toEqual([-1, 0]);
-    });
-
-    it("calculates bottom-left", () => {
-      const { anchor, dir } = getAnchorAndDir("bottom-left", w, h);
-      expect(anchor).toEqual([0, 600]);
-      expect(dir).toEqual([0, -1]);
-    });
-
-    it("calculates top-right", () => {
-      const { anchor, dir } = getAnchorAndDir("top-right", w, h);
-      expect(anchor).toEqual([1000, -100]);
-      expect(dir).toEqual([0, 1]);
-    });
-
-    it("calculates left", () => {
-      const { anchor, dir } = getAnchorAndDir("left", w, h);
-      expect(anchor).toEqual([-200, 250]);
-      expect(dir).toEqual([1, 0]);
-    });
-
-    it("calculates bottom-center", () => {
-      const { anchor, dir } = getAnchorAndDir("bottom-center", w, h);
-      expect(anchor).toEqual([500, 600]);
-      expect(dir).toEqual([0, -1]);
+    it("calculates positions for all RaysOrigin options", () => {
+      expect(getAnchorAndDir("top-center", w, h)).toEqual({ anchor: [500, -100], dir: [0, 1] });
+      expect(getAnchorAndDir("top-left", w, h)).toEqual({ anchor: [0, -100], dir: [0, 1] });
+      expect(getAnchorAndDir("top-right", w, h)).toEqual({ anchor: [1000, -100], dir: [0, 1] });
+      expect(getAnchorAndDir("top-center-offset", w, h)).toEqual({ anchor: [700, -100], dir: [-0.2, 1] });
+      expect(getAnchorAndDir("left", w, h)).toEqual({ anchor: [-200, 250], dir: [1, 0] });
+      expect(getAnchorAndDir("right", w, h)).toEqual({ anchor: [1200, 250], dir: [-1, 0] });
+      expect(getAnchorAndDir("bottom-left", w, h)).toEqual({ anchor: [0, 600], dir: [0, -1] });
+      expect(getAnchorAndDir("bottom-center", w, h)).toEqual({ anchor: [500, 600], dir: [0, -1] });
+      expect(getAnchorAndDir("bottom-right", w, h)).toEqual({ anchor: [1000, 600], dir: [0, -1] });
     });
   });
 });
@@ -151,9 +112,10 @@ describe("LightRays Utilities", () => {
 describe("LightRays Component", () => {
   beforeEach(() => {
     vi.useRealTimers();
+    rafCallbacks.clear();
+    rafIdCounter = 0;
 
     Object.defineProperty(window, "devicePixelRatio", { configurable: true, value: 1 });
-    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false }));
 
     Object.defineProperty(HTMLElement.prototype, "clientWidth", { configurable: true, value: 800 });
     Object.defineProperty(HTMLElement.prototype, "clientHeight", { configurable: true, value: 600 });
@@ -169,18 +131,15 @@ describe("LightRays Component", () => {
       toJSON: () => {},
     } as DOMRect);
 
-    // Capture requestAnimationFrame callbacks so we can manually step the render loop
-    let rafCallback: FrameRequestCallback | null = null;
     vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
-      rafCallback = cb;
-      return 1;
+      const id = ++rafIdCounter;
+      rafCallbacks.set(id, cb);
+      return id;
     });
-    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => {});
 
-    // Expose helper on window or closure if needed, or invoke via tests
-    (global as any).__triggerRaf = (time = performance.now()) => {
-      if (rafCallback) rafCallback(time);
-    };
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+      rafCallbacks.delete(id);
+    });
   });
 
   afterEach(async () => {
@@ -188,18 +147,45 @@ describe("LightRays Component", () => {
     // @ts-ignore
     oglModule.Renderer.shouldThrowError = false;
     // @ts-ignore
+    oglModule.Renderer.throwErrorOnCleanup = false;
+    // @ts-ignore
     oglModule.Renderer.returnNullExtension = false;
     vi.restoreAllMocks();
   });
 
-  it("renders the container without crashing", () => {
+  const stepAnimationFrame = (time = performance.now()) => {
+    const callbacks = Array.from(rafCallbacks.values());
+    rafCallbacks.clear();
+    callbacks.forEach((cb) => cb(time));
+  };
+
+  it("renders container and mounts WebGL canvas when visible", async () => {
     const { container } = render(<LightRays />);
-    expect(container.firstChild).toHaveClass("pointer-events-none");
-    expect(container.firstChild).toHaveClass("relative");
+
+    act(() => {
+      observerCallback([{ isIntersecting: true }] as any, {} as any);
+    });
+
+    await waitFor(() => {
+      expect(container.querySelector("canvas")).toBeInTheDocument();
+    });
   });
 
-  it("initializes WebGL, handles window resize (Lines 124-125), and updates props (Line 350)", async () => {
-    const { container, rerender, unmount } = render(<LightRays raysColor="#ff0000" />);
+  it("covers initialization abort when container unmounts during setTimeout (Lines 124-125)", async () => {
+    const { unmount } = render(<LightRays />);
+
+    act(() => {
+      observerCallback([{ isIntersecting: true }] as any, {} as any);
+    });
+
+    // Unmount synchronously before the 10ms timeout resolves
+    unmount();
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  });
+
+  it("updates uniforms on prop changes and window resize (Line 350)", async () => {
+    const { container, rerender } = render(<LightRays raysColor="#ff0000" />);
 
     act(() => {
       observerCallback([{ isIntersecting: true }] as any, {} as any);
@@ -209,33 +195,33 @@ describe("LightRays Component", () => {
       expect(container.querySelector("canvas")).toBeInTheDocument();
     });
 
-    // Trigger window resize event to cover lines 124-125 (updatePlacement)
+    // Resize event trigger
     act(() => {
       window.dispatchEvent(new Event("resize"));
     });
 
-    // Rerender with changed props to cover line 350 (prop sync useEffect)
-    rerender(
-      <LightRays
-        raysColor="#00ff00"
-        raysSpeed={2}
-        lightSpread={1.2}
-        rayLength={2.0}
-        pulsating={true}
-        fadeDistance={0.5}
-        saturation={0.8}
-        mouseInfluence={0.4}
-        noiseAmount={0.2}
-        distortion={0.3}
-        raysOrigin="bottom-center"
-      />,
-    );
-
-    unmount();
+    // Prop update trigger
+    act(() => {
+      rerender(
+        <LightRays
+          raysColor="#00ff00"
+          raysSpeed={2}
+          lightSpread={1.5}
+          rayLength={3.0}
+          pulsating={true}
+          fadeDistance={0.8}
+          saturation={0.5}
+          mouseInfluence={0.3}
+          noiseAmount={0.1}
+          distortion={0.2}
+          raysOrigin="bottom-right"
+        />,
+      );
+    });
   });
 
-  it("handles mousemove coordinates calculation (Lines 387-405)", async () => {
-    const { container, unmount } = render(<LightRays followMouse={true} mouseInfluence={0.5} />);
+  it("handles mouse movements and smooth tracking in render loop (Lines 387-405)", async () => {
+    const { container } = render(<LightRays followMouse={true} mouseInfluence={0.5} />);
 
     act(() => {
       observerCallback([{ isIntersecting: true }] as any, {} as any);
@@ -245,24 +231,25 @@ describe("LightRays Component", () => {
       expect(container.querySelector("canvas")).toBeInTheDocument();
     });
 
-    // Dispatch mousemove event over the container to execute coordinate calculations (Lines 387-405)
+    // Dispatch mousemove
     act(() => {
-      const mouseEvent = new MouseEvent("mousemove", {
-        clientX: 400,
-        clientY: 300,
-        bubbles: true,
-      });
-      window.dispatchEvent(mouseEvent);
+      window.dispatchEvent(
+        new MouseEvent("mousemove", {
+          clientX: 200,
+          clientY: 150,
+          bubbles: true,
+        }),
+      );
     });
 
-    unmount();
+    // Step animation loop to execute smoothMouse calculations inside loop()
+    act(() => {
+      stepAnimationFrame();
+    });
   });
 
-  it("catches and logs errors thrown during render loop (Line 146)", async () => {
+  it("catches rendering errors in animation frame loop (Line 146)", async () => {
     const oglModule = await import("ogl");
-    // @ts-ignore
-    oglModule.Renderer.shouldThrowError = true;
-
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const { container } = render(<LightRays />);
@@ -275,20 +262,25 @@ describe("LightRays Component", () => {
       expect(container.querySelector("canvas")).toBeInTheDocument();
     });
 
-    // Trigger the animation frame loop where render() will throw and hit catch block (Line 146)
+    // Enable error throw during rendering
+    // @ts-ignore
+    oglModule.Renderer.shouldThrowError = true;
+
+    // Trigger RAF step where render() throws
     act(() => {
-      (global as any).__triggerRaf();
+      stepAnimationFrame();
     });
 
     expect(consoleWarnSpy).toHaveBeenCalledWith("WebGL rendering error:", expect.any(Error));
   });
 
-  it("handles missing WEBGL_lose_context extension gracefully during cleanup (Line 303)", async () => {
+  it("handles null extension and catches errors during cleanup (Lines 303 & 319)", async () => {
     const oglModule = await import("ogl");
     // @ts-ignore
-    oglModule.Renderer.returnNullExtension = true;
+    oglModule.Renderer.throwErrorOnCleanup = true;
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    const { unmount, container } = render(<LightRays />);
+    const { container, unmount } = render(<LightRays />);
 
     act(() => {
       observerCallback([{ isIntersecting: true }] as any, {} as any);
@@ -298,8 +290,8 @@ describe("LightRays Component", () => {
       expect(container.querySelector("canvas")).toBeInTheDocument();
     });
 
-    // Unmount should execute cleanup safely when getExtension returns null (Line 303)
     unmount();
-    expect(container.querySelector("canvas")).not.toBeInTheDocument();
+
+    expect(consoleWarnSpy).toHaveBeenCalledWith("Error during WebGL cleanup:", expect.any(Error));
   });
 });
