@@ -21,15 +21,12 @@ describe("EventCard Component", () => {
     time: "10:00 AM",
   };
 
-  const originalEnv = process.env;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
   });
 
   afterEach(() => {
-    process.env = originalEnv;
+    vi.unstubAllEnvs();
   });
 
   it("renders event card correctly", () => {
@@ -44,9 +41,9 @@ describe("EventCard Component", () => {
   it("triggers posthog.capture when card is clicked and environment variables are set", async () => {
     const user = userEvent.setup();
 
-    // Set PostHog env variables to trigger lines 15-16
-    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN = "phc_test_token_123";
-    process.env.NEXT_PUBLIC_POSTHOG_HOST = "https://app.posthog.com";
+    // Use vi.stubEnv instead of modifying process.env directly
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN", "phc_test_token_123");
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_HOST", "https://app.posthog.com");
 
     render(<EventCard {...defaultProps} />);
 
@@ -59,8 +56,8 @@ describe("EventCard Component", () => {
   it("does not trigger posthog.capture when environment variables are missing", async () => {
     const user = userEvent.setup();
 
-    delete process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
-    delete process.env.NEXT_PUBLIC_POSTHOG_HOST;
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN", "");
+    vi.stubEnv("NEXT_PUBLIC_POSTHOG_HOST", "");
 
     render(<EventCard {...defaultProps} />);
 

@@ -1,6 +1,15 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import mongoose from 'mongoose';
 
+// Extend Global interface to declare the global mongoose cache cleanly
+declare global {
+    /* eslint-disable-next-line no-var */
+    var mongoose: {
+        conn: unknown;
+        promise: Promise<unknown> | null;
+    } | undefined;
+}
+
 vi.mock('mongoose', () => ({
     default: {
         connect: vi.fn(),
@@ -38,7 +47,7 @@ describe('connectDB', () => {
         const connectDB = (await import('./mongodb')).default;
 
         const mockConnection = { connections: [{ readyState: 1 }] };
-        vi.mocked(mongoose.connect).mockResolvedValueOnce(mockConnection as any);
+        vi.mocked(mongoose.connect).mockResolvedValueOnce(mockConnection as unknown as typeof mongoose);
 
         const conn = await connectDB();
 
@@ -58,8 +67,8 @@ describe('connectDB', () => {
 
         // Pre-populate the global cache simulating an existing connection
         global.mongoose = {
-            conn: mockCachedConnection as any,
-            promise: Promise.resolve(mockCachedConnection as any),
+            conn: mockCachedConnection,
+            promise: Promise.resolve(mockCachedConnection),
         };
 
         const connectDB = (await import('./mongodb')).default;
@@ -79,7 +88,7 @@ describe('connectDB', () => {
         // Pre-populate only the promise simulating a connection in progress
         global.mongoose = {
             conn: null,
-            promise: mockPromise as any,
+            promise: mockPromise,
         };
 
         const connectDB = (await import('./mongodb')).default;

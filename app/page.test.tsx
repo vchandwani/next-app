@@ -1,5 +1,5 @@
-import { render, screen, cleanup } from "@testing-library/react";
-import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import Home, { FeaturedEvents } from "./page";
 import { getAllEvents } from "@/lib/actions/event.actions";
@@ -24,10 +24,6 @@ vi.mock("@/lib/actions/event.actions", () => ({
 }));
 
 describe("Home Page", () => {
-  afterEach(() => {
-    cleanup(); // Clears document.body between tests
-  });
-
   it("renders the static home layout and fallback inside suspense boundary", () => {
     render(<Home />);
 
@@ -49,12 +45,8 @@ describe("FeaturedEvents Async Component", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    cleanup(); // Clears document.body between tests
-  });
-
   it("renders a list of events when data fetching succeeds", async () => {
-    vi.mocked(getAllEvents).mockResolvedValueOnce(mockEvents as any);
+    vi.mocked(getAllEvents).mockResolvedValueOnce(mockEvents as never);
 
     const ResolvedFeaturedEvents = await FeaturedEvents();
     render(ResolvedFeaturedEvents);
@@ -75,7 +67,6 @@ describe("FeaturedEvents Async Component", () => {
 
     expect(getAllEvents).toHaveBeenCalledTimes(1);
 
-    // Will now correctly return null because earlier DOM renders are wiped
     expect(screen.queryByTestId("event-card")).not.toBeInTheDocument();
   });
 });

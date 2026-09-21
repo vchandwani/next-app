@@ -36,7 +36,9 @@ describe("GET /api/events/[slug]", () => {
 
         // Chain findOne().lean()
         const mockLean = vi.fn().mockResolvedValue(mockEvent);
-        vi.mocked(Event.findOne).mockReturnValue({ lean: mockLean } as any);
+        vi.mocked(Event.findOne).mockReturnValue({
+            lean: mockLean,
+        } as unknown as ReturnType<typeof Event.findOne>);
 
         const req = new NextRequest("http://localhost:3000/api/events/react-next-summit");
         const params = Promise.resolve({ slug: "react-next-summit" });
@@ -56,7 +58,9 @@ describe("GET /api/events/[slug]", () => {
 
     it("returns 404 when no event matches the given slug", async () => {
         const mockLean = vi.fn().mockResolvedValue(null);
-        vi.mocked(Event.findOne).mockReturnValue({ lean: mockLean } as any);
+        vi.mocked(Event.findOne).mockReturnValue({
+            lean: mockLean,
+        } as unknown as ReturnType<typeof Event.findOne>);
 
         const req = new NextRequest("http://localhost:3000/api/events/non-existent-slug");
         const params = Promise.resolve({ slug: "non-existent-slug" });

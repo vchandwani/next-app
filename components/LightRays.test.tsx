@@ -3,10 +3,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import LightRays, { hexToRgb, getAnchorAndDir } from "./LightRays";
 
+// Interface to type the dynamic properties added to the mock Renderer
+interface MockRendererType {
+  shouldThrowError: boolean;
+  throwErrorOnCleanup: boolean;
+  returnNullExtension: boolean;
+}
+
 // 1. Mock 'ogl' using ES6 Classes
 vi.mock("ogl", () => {
   class MockRenderer {
-    gl: any;
+    gl: Record<string, unknown>;
     dpr = 1;
     static shouldThrowError = false;
     static throwErrorOnCleanup = false;
@@ -15,7 +22,7 @@ vi.mock("ogl", () => {
     constructor() {
       this.gl = {
         canvas: document.createElement("canvas"),
-        getExtension: vi.fn().mockImplementation((ext: string) => {
+        getExtension: vi.fn().mockImplementation(() => {
           if (MockRenderer.returnNullExtension) return null;
           return {
             loseContext: vi.fn().mockImplementation(() => {
@@ -31,8 +38,8 @@ vi.mock("ogl", () => {
         clear: vi.fn(),
       };
     }
-    setSize() {}
-    render() {
+    setSize(): void {}
+    render(): void {
       if (MockRenderer.shouldThrowError) {
         throw new Error("WebGL rendering failed");
       }
@@ -70,7 +77,7 @@ class MockIntersectionObserver {
 }
 vi.stubGlobal("IntersectionObserver", MockIntersectionObserver);
 
-let rafCallbacks: Map<number, FrameRequestCallback> = new Map();
+const rafCallbacks: Map<number, FrameRequestCallback> = new Map();
 let rafIdCounter = 0;
 
 describe("LightRays Utilities", () => {
@@ -131,25 +138,23 @@ describe("LightRays Component", () => {
       toJSON: () => {},
     } as DOMRect);
 
-    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb) => {
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation((cb: FrameRequestCallback) => {
       const id = ++rafIdCounter;
       rafCallbacks.set(id, cb);
       return id;
     });
 
-    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id) => {
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation((id: number) => {
       rafCallbacks.delete(id);
     });
   });
 
   afterEach(async () => {
     const oglModule = await import("ogl");
-    // @ts-ignore
-    oglModule.Renderer.shouldThrowError = false;
-    // @ts-ignore
-    oglModule.Renderer.throwErrorOnCleanup = false;
-    // @ts-ignore
-    oglModule.Renderer.returnNullExtension = false;
+    const Renderer = oglModule.Renderer as unknown as MockRendererType;
+    Renderer.shouldThrowError = false;
+    Renderer.throwErrorOnCleanup = false;
+    Renderer.returnNullExtension = false;
     vi.restoreAllMocks();
   });
 
@@ -163,7 +168,7 @@ describe("LightRays Component", () => {
     const { container } = render(<LightRays />);
 
     act(() => {
-      observerCallback([{ isIntersecting: true }] as any, {} as any);
+      observerCallback([{ isIntersecting: true }] as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
     });
 
     await waitFor(() => {
@@ -175,7 +180,7 @@ describe("LightRays Component", () => {
     const { unmount } = render(<LightRays />);
 
     act(() => {
-      observerCallback([{ isIntersecting: true }] as any, {} as any);
+      observerCallback([{ isIntersecting: true }] as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
     });
 
     // Unmount synchronously before the 10ms timeout resolves
@@ -188,7 +193,7 @@ describe("LightRays Component", () => {
     const { container, rerender } = render(<LightRays raysColor="#ff0000" />);
 
     act(() => {
-      observerCallback([{ isIntersecting: true }] as any, {} as any);
+      observerCallback([{ isIntersecting: true }] as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
     });
 
     await waitFor(() => {
@@ -224,7 +229,7 @@ describe("LightRays Component", () => {
     const { container } = render(<LightRays followMouse={true} mouseInfluence={0.5} />);
 
     act(() => {
-      observerCallback([{ isIntersecting: true }] as any, {} as any);
+      observerCallback([{ isIntersecting: true }] as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
     });
 
     await waitFor(() => {
@@ -250,12 +255,13 @@ describe("LightRays Component", () => {
 
   it("catches rendering errors in animation frame loop (Line 146)", async () => {
     const oglModule = await import("ogl");
+    const Renderer = oglModule.Renderer as unknown as MockRendererType;
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const { container } = render(<LightRays />);
 
     act(() => {
-      observerCallback([{ isIntersecting: true }] as any, {} as any);
+      observerCallback([{ isIntersecting: true }] as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
     });
 
     await waitFor(() => {
@@ -263,8 +269,7 @@ describe("LightRays Component", () => {
     });
 
     // Enable error throw during rendering
-    // @ts-ignore
-    oglModule.Renderer.shouldThrowError = true;
+    Renderer.shouldThrowError = true;
 
     // Trigger RAF step where render() throws
     act(() => {
@@ -276,14 +281,14 @@ describe("LightRays Component", () => {
 
   it("handles null extension and catches errors during cleanup (Lines 303 & 319)", async () => {
     const oglModule = await import("ogl");
-    // @ts-ignore
-    oglModule.Renderer.throwErrorOnCleanup = true;
+    const Renderer = oglModule.Renderer as unknown as MockRendererType;
+    Renderer.throwErrorOnCleanup = true;
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const { container, unmount } = render(<LightRays />);
 
     act(() => {
-      observerCallback([{ isIntersecting: true }] as any, {} as any);
+      observerCallback([{ isIntersecting: true }] as unknown as IntersectionObserverEntry[], {} as IntersectionObserver);
     });
 
     await waitFor(() => {

@@ -25,7 +25,7 @@ describe("getAllEvents", () => {
 
     const mockLean = vi.fn().mockResolvedValueOnce(mockEvents);
     const mockSort = vi.fn().mockReturnValue({ lean: mockLean });
-    vi.mocked(Event.find).mockReturnValue({ sort: mockSort } as any);
+    vi.mocked(Event.find).mockReturnValue({ sort: mockSort } as unknown as ReturnType<typeof Event.find>);
 
     const result = await getAllEvents();
     expect(result).toBeDefined();
@@ -36,7 +36,7 @@ describe("getAllEvents", () => {
   it("should return an empty array if no events are found", async () => {
     const mockLean = vi.fn().mockResolvedValueOnce([]);
     const mockSort = vi.fn().mockReturnValue({ lean: mockLean });
-    vi.mocked(Event.find).mockReturnValue({ sort: mockSort } as any);
+    vi.mocked(Event.find).mockReturnValue({ sort: mockSort } as unknown as ReturnType<typeof Event.find>);
 
     const result = await getAllEvents();
     expect(result).toBeDefined();
@@ -69,18 +69,18 @@ describe("getEventBySlug", () => {
     const mockEvent = { _id: "event123", slug, email: "test@gmail.com" };
 
     const mockLean = vi.fn().mockResolvedValueOnce(mockEvent);
-    vi.mocked(Event.findOne).mockReturnValue({ lean: mockLean } as any);
+    vi.mocked(Event.findOne).mockReturnValue({ lean: mockLean } as unknown as ReturnType<typeof Event.findOne>);
 
     const result = await getEventBySlug(slug);
     expect(result).toBeDefined();
-    expect(result.slug).toBe(slug);
+    expect(result?.slug).toBe(slug);
   });
 
   it("should return null for a non-existent event slug", async () => {
     const slug = "nonExistentSlug";
 
     const mockLean = vi.fn().mockResolvedValueOnce(null);
-    vi.mocked(Event.findOne).mockReturnValue({ lean: mockLean } as any);
+    vi.mocked(Event.findOne).mockReturnValue({ lean: mockLean } as unknown as ReturnType<typeof Event.findOne>);
 
     const result = await getEventBySlug(slug);
     expect(result).toBeNull();
@@ -112,11 +112,11 @@ describe("getSimilarEventsBySlug", () => {
     const mockSimilarEvents = [{ _id: "event456", slug: "other-slug", tags: ["tech"] }];
 
     // Event.findOne is awaited directly without .lean() in this function
-    vi.mocked(Event.findOne).mockResolvedValueOnce(mockEvent as any);
+    vi.mocked(Event.findOne).mockResolvedValueOnce(mockEvent as unknown as ReturnType<typeof Event.findOne>);
 
     // Event.find uses .lean()
     const mockFindLean = vi.fn().mockResolvedValueOnce(mockSimilarEvents);
-    vi.mocked(Event.find).mockReturnValue({ lean: mockFindLean } as any);
+    vi.mocked(Event.find).mockReturnValue({ lean: mockFindLean } as unknown as ReturnType<typeof Event.find>);
 
     const result = await getSimilarEventsBySlug(slug);
     expect(result).toBeDefined();

@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react"; // Import cleanup
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import BookEvent from "./BookEvent";
 import { createBooking } from "@/lib/actions/bookings.actions";
@@ -31,7 +31,6 @@ describe("BookEvent Component", () => {
   });
 
   afterEach(() => {
-    cleanup(); // Destroys the rendered component so buttons don't pile up!
     vi.restoreAllMocks();
   });
 
@@ -55,7 +54,7 @@ describe("BookEvent Component", () => {
 
   it("submits booking successfully and displays confirmation message", async () => {
     const user = userEvent.setup();
-    vi.mocked(createBooking).mockResolvedValueOnce({ success: true } as any);
+    vi.mocked(createBooking).mockResolvedValueOnce({ success: true } as never);
 
     render(<BookEvent {...defaultProps} />);
 
@@ -75,33 +74,9 @@ describe("BookEvent Component", () => {
     expect(screen.getByText(/thank you for booking the event!/i)).toBeInTheDocument();
   });
 
-  it("submits booking successfully and displays confirmation message", async () => {
-    const user = userEvent.setup();
-    vi.mocked(createBooking).mockResolvedValueOnce({ success: true } as any);
-
-    const { container } = render(<BookEvent {...defaultProps} />);
-
-    const input = screen.getByLabelText(/email:/i);
-    const submitButton = container.querySelector('button[type="submit"]') as HTMLButtonElement;
-
-    await user.type(input, "developer@example.com");
-    await user.click(submitButton);
-
-    expect(createBooking).toHaveBeenCalledWith("evt_123", "react-summit-2026", "developer@example.com");
-    expect(posthog.capture).toHaveBeenCalledWith("event_booked", {
-      eventId: "evt_123",
-      slug: "react-summit-2026",
-      email: "developer@example.com",
-    });
-
-    expect(screen.getByText(/thank you for booking the event!/i)).toBeInTheDocument();
-  });
-
-  // COver line 19-20 when success is false
-  // Cover lines 19-20 when success is false
   it("handles booking failure gracefully without showing success message", async () => {
     const user = userEvent.setup();
-    vi.mocked(createBooking).mockResolvedValueOnce({ success: false } as any);
+    vi.mocked(createBooking).mockResolvedValueOnce({ success: false } as never);
 
     render(<BookEvent {...defaultProps} />);
 
@@ -113,14 +88,10 @@ describe("BookEvent Component", () => {
 
     expect(createBooking).toHaveBeenCalledWith("evt_123", "react-summit-2026", "developer@example.com");
 
-    // Assert lines 19-20 executed
     expect(console.error).toHaveBeenCalledWith("Booking creation failed");
     expect(posthog.captureException).toHaveBeenCalledWith("Booking creation failed");
 
-    // Assert success analytics were not tracked
     expect(posthog.capture).not.toHaveBeenCalled();
-
-    // Assert the UI stayed on the form and didn't show the success message
     expect(screen.queryByText(/thank you for booking the event!/i)).not.toBeInTheDocument();
   });
 });

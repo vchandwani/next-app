@@ -27,6 +27,18 @@ vi.mock("cloudinary", () => ({
     },
 }));
 
+interface FormDataOverrides {
+    title?: string;
+    agenda?: string;
+    tags?: string;
+    image?: File | string | null;
+}
+
+type CloudinaryCallback = (
+    error: Error | null,
+    result: { secure_url: string } | null
+) => void;
+
 describe("Events API Route Handlers", () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -45,7 +57,9 @@ describe("Events API Route Handlers", () => {
             ];
 
             const mockSort = vi.fn().mockResolvedValue(mockEvents);
-            vi.mocked(Event.find).mockReturnValue({ sort: mockSort } as any);
+            vi.mocked(Event.find).mockReturnValue({
+                sort: mockSort,
+            } as unknown as ReturnType<typeof Event.find>);
 
             const response = await GET();
             const body = await response.json();
@@ -61,7 +75,9 @@ describe("Events API Route Handlers", () => {
         });
 
         it("returns status 500 when database connection or query fails", async () => {
-            vi.mocked(connectDB).mockRejectedValueOnce(new Error("Database connection failed"));
+            vi.mocked(connectDB).mockRejectedValueOnce(
+                new Error("Database connection failed")
+            );
 
             const response = await GET();
             const body = await response.json();
@@ -75,13 +91,21 @@ describe("Events API Route Handlers", () => {
     });
 
     describe("POST /api/events", () => {
-        const mockFile = new File(["dummy image content"], "poster.png", { type: "image/png" });
+        const mockFile = new File(["dummy image content"], "poster.png", {
+            type: "image/png",
+        });
 
-        const createMockFormData = (overrides: Record<string, any> = {}) => {
+        const createMockFormData = (overrides: FormDataOverrides = {}) => {
             const formData = new FormData();
             formData.append("title", overrides.title ?? "Tech Summit 2026");
-            formData.append("agenda", overrides.agenda ?? JSON.stringify(["Keynote", "Q&A"]));
-            formData.append("tags", overrides.tags ?? JSON.stringify(["tech", "react"]));
+            formData.append(
+                "agenda",
+                overrides.agenda ?? JSON.stringify(["Keynote", "Q&A"])
+            );
+            formData.append(
+                "tags",
+                overrides.tags ?? JSON.stringify(["tech", "react"])
+            );
 
             if (overrides.image !== undefined) {
                 if (overrides.image !== null) {
@@ -104,19 +128,26 @@ describe("Events API Route Handlers", () => {
             return req;
         };
 
-        const setupCloudinaryMock = (shouldSuccess = true, secureUrl = "https://res.cloudinary.com/demo/image/upload/sample.jpg") => {
-            vi.mocked(cloudinary.uploader.upload_stream).mockImplementation((options: any, callback: any) => {
-                const stream = {
-                    end: vi.fn().mockImplementation((buffer: Buffer) => {
-                        if (shouldSuccess) {
-                            callback(null, { secure_url: secureUrl });
-                        } else {
-                            callback(new Error("Cloudinary error"), null);
-                        }
-                    }),
-                };
-                return stream as any;
-            });
+        const setupCloudinaryMock = (
+            shouldSuccess = true,
+            secureUrl = "https://res.cloudinary.com/demo/image/upload/sample.jpg"
+        ) => {
+            vi.mocked(cloudinary.uploader.upload_stream).mockImplementation(
+                ((_options: unknown, callback: CloudinaryCallback) => {
+                    const stream = {
+                        end: vi.fn().mockImplementation((_buffer: Buffer) => {
+                            if (shouldSuccess) {
+                                callback(null, { secure_url: secureUrl });
+                            } else {
+                                callback(new Error("Cloudinary error"), null);
+                            }
+                        }),
+                    };
+                    return stream as unknown as ReturnType<
+                        typeof cloudinary.uploader.upload_stream
+                    >;
+                }) as unknown as typeof cloudinary.uploader.upload_stream
+            );
         };
 
         it("creates an event successfully and returns status 201", async () => {
@@ -130,7 +161,9 @@ describe("Events API Route Handlers", () => {
                 agenda: ["Keynote", "Q&A"],
             };
 
-            vi.mocked(Event.create).mockResolvedValueOnce(createdEvent as any);
+            vi.mocked(Event.create).mockResolvedValueOnce(
+                createdEvent as unknown as ReturnType<typeof Event.create>
+            );
 
             const formData = createMockFormData();
             const req = createMockRequest(formData);
@@ -154,7 +187,9 @@ describe("Events API Route Handlers", () => {
             const body = await response.json();
 
             expect(response.status).toBe(400);
-            expect(body.message).toBe("Invalid agenda/tags format, expected a JSON array");
+            expect(body.message).toBe(
+                "Invalid agenda/tags format, expected a JSON array"
+            );
         });
 
         it("returns 400 when image file is missing or passed as text string", async () => {
@@ -182,25 +217,12 @@ describe("Events API Route Handlers", () => {
             expect(body.error).toBe("Cloudinary error");
         });
 
-        it("returns 400 when JSON.parse fails for agenda or tags", async () => {
-            const formData = new FormData();
-            formData.append("title", "Sample Event");
-            formData.append("agenda", "invalid-json-string");
-
-            const req = createMockRequest(formData);
-
-            const response = await POST(req);
-            const body = await response.json();
-
-            expect(response.status).toBe(400);
-            // Updated to match your route's actual error message
-            expect(body.message).toMatch(/Invalid agenda\/tags format/i);
-        });
-
         it("returns 500 when database creation fails", async () => {
             const formData = createMockFormData();
 
-            vi.spyOn(Event, "create").mockRejectedValueOnce(new Error("Database connection failed"));
+            vi.spyOn(Event, "create").mockRejectedValueOnce(
+                new Error("Database connection failed")
+            );
 
             const req = createMockRequest(formData);
 
@@ -208,9 +230,7 @@ describe("Events API Route Handlers", () => {
             const body = await response.json();
 
             expect(response.status).toBe(500);
-            // Updated to match your route's actual error message
             expect(body.message).toBe("Event creation failed");
         });
-
     });
 });

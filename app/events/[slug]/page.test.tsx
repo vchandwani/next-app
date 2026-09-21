@@ -17,7 +17,7 @@ vi.mock("next/cache", () => ({
 
 // 2. Mock next/image to render a basic img tag
 vi.mock("next/image", () => ({
-  default: (props: any) => <img {...props} />,
+  default: (props: React.ImgHTMLAttributes<HTMLImageElement>) => <img {...props} />,
 }));
 
 // 3. Mock dependent Server Actions
@@ -109,9 +109,9 @@ describe("EventDetailsContent", () => {
   });
 
   it("renders full event content when data exists (with bookings > 0)", async () => {
-    vi.mocked(getEventBySlug).mockResolvedValue(mockEvent as any);
-    vi.mocked(getBookingByEvent).mockResolvedValue([{ id: "b1" }, { id: "b2" }] as any);
-    vi.mocked(getSimilarEventsBySlug).mockResolvedValue([mockSimilarEvent] as any);
+    vi.mocked(getEventBySlug).mockResolvedValue(mockEvent as unknown as ReturnType<typeof getEventBySlug>);
+    vi.mocked(getBookingByEvent).mockResolvedValue([{ id: "b1" }, { id: "b2" }] as unknown as ReturnType<typeof getBookingByEvent>);
+    vi.mocked(getSimilarEventsBySlug).mockResolvedValue([mockSimilarEvent] as unknown as ReturnType<typeof getSimilarEventsBySlug>);
 
     const params = Promise.resolve({ slug: "tech-conference-2026" });
 
@@ -127,8 +127,8 @@ describe("EventDetailsContent", () => {
   });
 
   it("renders first booking callout when bookings count is 0", async () => {
-    vi.mocked(getEventBySlug).mockResolvedValue(mockEvent as any);
-    vi.mocked(getBookingByEvent).mockResolvedValue([] as any);
+    vi.mocked(getEventBySlug).mockResolvedValue(mockEvent as unknown as ReturnType<typeof getEventBySlug>);
+    vi.mocked(getBookingByEvent).mockResolvedValue([] as unknown as ReturnType<typeof getBookingByEvent>);
     vi.mocked(getSimilarEventsBySlug).mockResolvedValue([]);
 
     const params = Promise.resolve({ slug: "tech-conference-2026" });
@@ -140,14 +140,17 @@ describe("EventDetailsContent", () => {
   });
 
   it("triggers notFound when event is not returned", async () => {
-    vi.mocked(getEventBySlug).mockResolvedValue(null);
+    vi.mocked(getEventBySlug).mockResolvedValue(null as unknown as ReturnType<typeof getEventBySlug>);
     const params = Promise.resolve({ slug: "invalid-slug" });
 
     await expect(EventDetailsContent({ params })).rejects.toThrow("NEXT_NOT_FOUND");
   });
 
   it("triggers notFound when event description is missing", async () => {
-    vi.mocked(getEventBySlug).mockResolvedValue({ ...mockEvent, description: "" } as any);
+    vi.mocked(getEventBySlug).mockResolvedValue({
+      ...mockEvent,
+      description: "",
+    } as unknown as ReturnType<typeof getEventBySlug>);
     const params = Promise.resolve({ slug: "no-desc-slug" });
 
     await expect(EventDetailsContent({ params })).rejects.toThrow("NEXT_NOT_FOUND");
@@ -155,9 +158,9 @@ describe("EventDetailsContent", () => {
 });
 
 describe("EventDetailsPage", () => {
-  it("renders Suspense wrapper and inner component correctly", async () => {
-    vi.mocked(getEventBySlug).mockResolvedValue(mockEvent as any);
-    vi.mocked(getBookingByEvent).mockResolvedValue([] as any);
+  it("renders Suspense wrapper and inner component correctly", () => {
+    vi.mocked(getEventBySlug).mockResolvedValue(mockEvent as unknown as ReturnType<typeof getEventBySlug>);
+    vi.mocked(getBookingByEvent).mockResolvedValue([] as unknown as ReturnType<typeof getBookingByEvent>);
     vi.mocked(getSimilarEventsBySlug).mockResolvedValue([]);
 
     const params = Promise.resolve({ slug: "tech-conference-2026" });
