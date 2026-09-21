@@ -1,5 +1,0 @@
-# .eslintignore
-coverage/
-.next/
-node_modules/
-.history/
