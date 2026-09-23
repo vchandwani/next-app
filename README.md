@@ -1,5 +1,11 @@
 Application URL : https://next-app-silk-sigma.vercel.app/
 
+Cloudinary : https://cloudinary.com/
+
+Mongo DB: https://account.mongodb.com/
+
+PostHog: https://us.posthog.com/
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
